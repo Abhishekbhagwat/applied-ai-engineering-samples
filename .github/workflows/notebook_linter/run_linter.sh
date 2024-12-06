@@ -59,9 +59,17 @@ done
 # Note: Use process substitution to persist the data in the array
 if [ ${#notebooks[@]} -eq 0 ]; then
   echo "Checking for changed notebooks using git"
-  while read -r file || [ -n "$line" ]; do
-    notebooks+=("$file")
-  done < <(git diff --name-only main... | grep '\.ipynb$')
+  if [ -n "$GITHUB_BASE_REF" ]; then
+    # If running in a PR
+    while read -r file || [ -n "$line" ]; do
+      notebooks+=("$file")
+    done < <(git diff --name-only origin/"$GITHUB_BASE_REF"... | grep '\.ipynb$')
+  else
+    # If running in a push
+    while read -r file || [ -n "$line" ]; do
+      notebooks+=("$file")
+    done < <(git diff --name-only HEAD^1 | grep '\.ipynb$')
+  fi
 fi
 
 problematic_notebooks=()
